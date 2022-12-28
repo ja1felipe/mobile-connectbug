@@ -1,9 +1,38 @@
 import React, { useState } from "react";
-import { StyleSheet, View, Pressable, Text, Modal, Image } from "react-native";
+import {
+  StyleSheet,
+  View,
+  Pressable,
+  Text,
+  Modal,
+  Image,
+  TextInput,
+  TextInputProps,
+} from "react-native";
 import assets from "./constants/assets";
+
+interface IInput extends TextInputProps {
+  label: string;
+}
+
+function Input({ ...props }: IInput) {
+  const [focus, setFocus] = useState(false);
+  return (
+    <View style={{ width: "100%" }}>
+      <Text>{props.label}</Text>
+      <TextInput
+        onFocus={() => setFocus(true)}
+        onBlur={() => setFocus(false)}
+        style={focus ? styles.inputOnFocus : styles.inputOnBlur}
+        {...props}
+      />
+    </View>
+  );
+}
 
 export default function App() {
   const [modalVisible, setModalVisible] = useState(false);
+  const [text, onChangeText] = React.useState("Useless Text");
 
   return (
     <>
@@ -17,12 +46,34 @@ export default function App() {
       >
         <View style={styles.centeredView}>
           <View style={styles.modalView}>
+            <Input
+              label="Título"
+              maxLength={25}
+              value={text}
+              placeholder="Teste"
+            />
+            <Input
+              label="Descrição"
+              multiline
+              maxLength={256}
+              numberOfLines={7}
+              value={text}
+              placeholder="Teste"
+              onChangeText={(text) => onChangeText(text)}
+            />
             <Text>Hello World!</Text>
             <Pressable
-              style={styles.button}
+              style={styles.closeButton}
               onPress={() => setModalVisible(!modalVisible)}
             >
-              <Text>Hide Modal</Text>
+              <Image
+                source={assets.close}
+                style={{
+                  width: 20,
+                  height: 20,
+                  alignSelf: "center",
+                }}
+              />
             </Pressable>
           </View>
         </View>
@@ -62,6 +113,18 @@ const styles = StyleSheet.create({
     bottom: 15,
     right: 15,
   },
+  closeButton: {
+    backgroundColor: "red",
+    borderRadius: 50,
+    padding: 10,
+    height: 40,
+    width: 40,
+    alignContent: "center",
+    justifyContent: "center",
+    position: "absolute",
+    top: -60,
+    right: 0,
+  },
   centeredView: {
     flex: 1,
     justifyContent: "center",
@@ -74,6 +137,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 35,
     alignItems: "center",
+    borderColor: "#6A6B83",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -82,5 +146,30 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+    width: "80%",
+  },
+  inputOnBlur: {
+    padding: 5,
+    backgroundColor: "#D9D9D9",
+    borderRadius: 5,
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#6A6B83",
+    color: "#6A6B83",
+    marginBottom: 10,
+    textAlignVertical: "top",
+    underlineColorAndroid: "transparent",
+  },
+  inputOnFocus: {
+    padding: 5,
+    backgroundColor: "#D9D9D9",
+    borderRadius: 5,
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#9BC53D",
+    color: "#6A6B83",
+    marginBottom: 10,
+    textAlignVertical: "top",
+    underlineColorAndroid: "transparent",
   },
 });
