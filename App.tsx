@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -8,23 +8,25 @@ import {
   Image,
   TextInput,
   TextInputProps,
+  ScrollView,
 } from "react-native";
+
 import assets from "./constants/assets";
 
 interface IInput extends TextInputProps {
-  label: string;
+  label?: string;
 }
 
 function Input({ ...props }: IInput) {
   const [focus, setFocus] = useState(false);
   return (
     <View style={{ width: "100%" }}>
-      <Text>{props.label}</Text>
+      {props.label ? <Text>{props.label}</Text> : null}
       <TextInput
         onFocus={() => setFocus(true)}
         onBlur={() => setFocus(false)}
-        style={focus ? styles.inputOnFocus : styles.inputOnBlur}
         {...props}
+        style={focus ? styles.inputOnFocus : styles.inputOnBlur}
       />
     </View>
   );
@@ -32,7 +34,23 @@ function Input({ ...props }: IInput) {
 
 export default function App() {
   const [modalVisible, setModalVisible] = useState(false);
-  const [text, onChangeText] = React.useState("Useless Text");
+  const [title, onChangeTitle] = useState("");
+  const [description, onChangeDescription] = useState("");
+  const [steps, setSteps] = useState<string[]>([""]);
+
+  const handleAddStep = useCallback(() => {
+    setSteps((prev) => [...prev, ""]);
+  }, []);
+
+  const handleRemoveStep = useCallback(() => {
+    setSteps((prev) => [...prev].slice(0, -1));
+  }, []);
+
+  const handleChangeStep = (text: string, i: number) => {
+    const newArr = [...steps];
+    newArr[i] = text;
+    setSteps([...newArr]);
+  };
 
   return (
     <>
@@ -45,37 +63,94 @@ export default function App() {
         }}
       >
         <View style={styles.centeredView}>
-          <View style={styles.modalView}>
+          <ScrollView
+            contentContainerStyle={{ padding: 35 }}
+            style={styles.modalView}
+          >
             <Input
               label="Título"
               maxLength={25}
-              value={text}
-              placeholder="Teste"
+              value={title}
+              onChangeText={(text) => onChangeTitle(text)}
+              placeholder="Título/Área/Tópico"
             />
+
             <Input
               label="Descrição"
               multiline
               maxLength={256}
               numberOfLines={7}
-              value={text}
-              placeholder="Teste"
-              onChangeText={(text) => onChangeText(text)}
+              value={description}
+              placeholder="Breve descrição"
+              onChangeText={(text) => onChangeDescription(text)}
             />
-            <Text>Hello World!</Text>
-            <Pressable
-              style={styles.closeButton}
-              onPress={() => setModalVisible(!modalVisible)}
-            >
-              <Image
-                source={assets.close}
-                style={{
-                  width: 20,
-                  height: 20,
-                  alignSelf: "center",
-                }}
-              />
-            </Pressable>
-          </View>
+
+            <Text>Passo a passo</Text>
+            {steps.map((step, i) => {
+              return (
+                <View
+                  style={{
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "flex-start",
+                  }}
+                  key={i}
+                >
+                  <Input
+                    value={step}
+                    placeholder={`Passo ${i + 1}`}
+                    onChangeText={(text) => handleChangeStep(text, i)}
+                  />
+                  <View style={{ flexDirection: "row", alignSelf: "flex-end" }}>
+                    {steps.length > 1 && steps.length === i + 1 ? (
+                      <Pressable
+                        style={styles.removeStepButton}
+                        onPress={handleRemoveStep}
+                      >
+                        <Image
+                          source={assets.remove}
+                          style={{
+                            width: 20,
+                            height: 20,
+                            alignSelf: "center",
+                          }}
+                        />
+                      </Pressable>
+                    ) : null}
+                    {steps.length === i + 1 ? (
+                      <Pressable
+                        style={styles.addStepButton}
+                        onPress={handleAddStep}
+                      >
+                        <Image
+                          source={assets.close}
+                          style={{
+                            width: 20,
+                            height: 20,
+                            alignSelf: "center",
+                            transform: [{ rotate: "45deg" }],
+                          }}
+                        />
+                      </Pressable>
+                    ) : null}
+                  </View>
+                </View>
+              );
+            })}
+          </ScrollView>
+          <Pressable
+            style={styles.closeButton}
+            onPress={() => setModalVisible(!modalVisible)}
+          >
+            <Image
+              source={assets.close}
+              style={{
+                width: 20,
+                height: 20,
+                alignSelf: "center",
+              }}
+            />
+          </Pressable>
         </View>
       </Modal>
       <Pressable style={styles.button} onPress={() => setModalVisible(true)}>
@@ -122,21 +197,19 @@ const styles = StyleSheet.create({
     alignContent: "center",
     justifyContent: "center",
     position: "absolute",
-    top: -60,
-    right: 0,
+    top: -50,
+    right: 30,
   },
   centeredView: {
-    flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 22,
+    marginTop: "50%",
+    maxHeight: "70%",
   },
   modalView: {
     margin: 20,
     backgroundColor: "white",
     borderRadius: 20,
-    padding: 35,
-    alignItems: "center",
     borderColor: "#6A6B83",
     shadowColor: "#000",
     shadowOffset: {
@@ -152,7 +225,6 @@ const styles = StyleSheet.create({
     padding: 5,
     backgroundColor: "#D9D9D9",
     borderRadius: 5,
-    width: "100%",
     borderWidth: 1,
     borderColor: "#6A6B83",
     color: "#6A6B83",
@@ -164,12 +236,29 @@ const styles = StyleSheet.create({
     padding: 5,
     backgroundColor: "#D9D9D9",
     borderRadius: 5,
-    width: "100%",
     borderWidth: 1,
     borderColor: "#9BC53D",
     color: "#6A6B83",
     marginBottom: 10,
     textAlignVertical: "top",
     underlineColorAndroid: "transparent",
+  },
+  addStepButton: {
+    backgroundColor: "#9BC53D",
+    borderRadius: 50,
+    marginLeft: 5,
+    height: 30,
+    width: 30,
+    alignContent: "center",
+    justifyContent: "center",
+  },
+  removeStepButton: {
+    backgroundColor: "red",
+    borderRadius: 50,
+    marginLeft: 5,
+    height: 30,
+    width: 30,
+    alignContent: "center",
+    justifyContent: "center",
   },
 });
