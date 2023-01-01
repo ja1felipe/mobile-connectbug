@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -9,10 +9,12 @@ import {
   TextInput,
   TextInputProps,
   ScrollView,
+  Appearance,
 } from "react-native";
 
 import assets from "./constants/assets";
 
+import * as ImagePicker from "expo-image-picker";
 interface IInput extends TextInputProps {
   label?: string;
 }
@@ -33,10 +35,33 @@ function Input({ ...props }: IInput) {
 }
 
 export default function App() {
+  const colorScheme = Appearance.getColorScheme();
+
   const [modalVisible, setModalVisible] = useState(false);
   const [title, onChangeTitle] = useState("");
   const [description, onChangeDescription] = useState("");
   const [steps, setSteps] = useState<string[]>([""]);
+
+  const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
+
+  const pickImages = async () => {
+    // No permissions request is necessary for launching the image library
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      aspect: [4, 3],
+      quality: 1,
+      allowsMultipleSelection: true,
+    });
+
+    if (!result.canceled) {
+      const newImgs = [...images, ...result.assets];
+      setImages(newImgs);
+    }
+  };
+
+  const clearImages = async () => {
+    setImages([]);
+  };
 
   const handleAddStep = useCallback(() => {
     setSteps((prev) => [...prev, ""]);
@@ -51,6 +76,10 @@ export default function App() {
     newArr[i] = text;
     setSteps([...newArr]);
   };
+
+  useEffect(() => {
+    console.log(colorScheme);
+  }, [colorScheme]);
 
   return (
     <>
@@ -67,6 +96,14 @@ export default function App() {
             contentContainerStyle={{ padding: 35 }}
             style={styles.modalView}
           >
+            <Image
+              source={colorScheme === "dark" ? assets.logo : assets.logoDark}
+              style={{
+                width: 200,
+                height: 100,
+                alignSelf: "center",
+              }}
+            />
             <Input
               label="Título"
               maxLength={25}
@@ -137,6 +174,36 @@ export default function App() {
                 </View>
               );
             })}
+            <Text>Screenshots</Text>
+            {images.length > 0 ? (
+              <ScrollView horizontal={true} style={styles.imagesView}>
+                {images.map((img) => {
+                  return (
+                    <Image
+                      source={{ uri: img.uri }}
+                      style={{ width: 100, height: 100, marginRight: 5 }}
+                    />
+                  );
+                })}
+              </ScrollView>
+            ) : null}
+            <View style={{ flexDirection: "row", marginTop: 5 }}>
+              {images.length > 0 ? (
+                <Pressable
+                  style={{ ...styles.imagesButton, backgroundColor: "red" }}
+                  onPress={clearImages}
+                >
+                  <Text style={{ color: "white", textTransform: "uppercase" }}>
+                    Limpar
+                  </Text>
+                </Pressable>
+              ) : null}
+              <Pressable style={styles.imagesButton} onPress={pickImages}>
+                <Text style={{ color: "white", textTransform: "uppercase" }}>
+                  Upload
+                </Text>
+              </Pressable>
+            </View>
           </ScrollView>
           <Pressable
             style={styles.closeButton}
@@ -260,5 +327,19 @@ const styles = StyleSheet.create({
     width: 30,
     alignContent: "center",
     justifyContent: "center",
+  },
+  imagesView: {
+    flexDirection: "row",
+    padding: 5,
+    backgroundColor: "#D9D9D9",
+    overflow: "scroll",
+  },
+  imagesButton: {
+    flex: 1,
+    backgroundColor: "#9BC53D",
+    borderWidth: 1,
+    borderColor: "#D9D9D9",
+    padding: 10,
+    alignItems: "center",
   },
 });
