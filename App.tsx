@@ -15,6 +15,18 @@ import {
 import assets from "./constants/assets";
 
 import * as ImagePicker from "expo-image-picker";
+import * as Device from "expo-device";
+import * as Application from "expo-application";
+
+type TDeviceInfos = {
+  manufactor: string | null;
+  model: string | null;
+  systemVersion: string | null;
+  bundleId: string | null;
+  buildNumber: string | null;
+  appVersion: string | null;
+  deviceName: string | null;
+};
 interface IInput extends TextInputProps {
   label?: string;
 }
@@ -41,11 +53,10 @@ export default function App() {
   const [title, onChangeTitle] = useState("");
   const [description, onChangeDescription] = useState("");
   const [steps, setSteps] = useState<string[]>([""]);
-
   const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
+  const [deviceInfo, setDeviceInfo] = useState<Partial<TDeviceInfos>>();
 
   const pickImages = async () => {
-    // No permissions request is necessary for launching the image library
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
       aspect: [4, 3],
@@ -78,8 +89,17 @@ export default function App() {
   };
 
   useEffect(() => {
-    console.log(colorScheme);
-  }, [colorScheme]);
+    const infos = {
+      appVersion: Application.nativeApplicationVersion,
+      buildNumber: Application.nativeBuildVersion,
+      bundleId: Application.applicationId,
+      deviceName: Device.deviceName,
+      manufactor: Device.manufacturer,
+      model: Device.modelName,
+      systemVersion: Device.osVersion,
+    };
+    setDeviceInfo(infos);
+  }, []);
 
   return (
     <>
